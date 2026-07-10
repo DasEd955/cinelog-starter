@@ -23,11 +23,15 @@ def add_film(user_id):
     """
     POST /watchlist/<user_id>/add
 
-    Body: { "film_id": "<uuid>" }
+    Body: { "film_id": "<uuid>", "public": <bool, optional> }
     """
     data = request.get_json()
     if not data or "film_id" not in data:
         return jsonify({"error": "film_id is required"}), 400
 
-    entry = add_to_watchlist(user_id=user_id, film_id=data["film_id"])
+    kwargs = {"user_id": user_id, "film_id": data["film_id"]}
+    if "public" in data:
+        kwargs["public"] = data["public"]
+
+    entry = add_to_watchlist(**kwargs)
     return jsonify(entry.to_dict()), 201
