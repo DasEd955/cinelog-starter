@@ -70,6 +70,39 @@ def test_add_to_watchlist_creates_entry(app, sample_user, sample_film):
         assert in_db is not None
 
 
+# ── Visibility ───────────────────────────────────────────────────────────────
+
+def test_add_to_watchlist_public_parameter(app, sample_user, sample_film):
+    """
+    The public parameter should control whether the watchlist entry is
+    publicly visible. Default is True, and callers can override it to False.
+    """
+    with app.app_context():
+        # Test default public=True
+        entry1 = add_to_watchlist(user_id=sample_user, film_id=sample_film)
+        assert entry1.public is True
+
+        # Test explicit public=False
+        # Create another film for the second test
+        film2 = Film(title="The Godfather", year=1972, genre="Crime")
+        db.session.add(film2)
+        db.session.commit()
+
+        entry2 = add_to_watchlist(user_id=sample_user, film_id=film2.id, public=False)
+        assert entry2.public is False
+
+        # Verify persistence in database
+        in_db1 = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=sample_film
+        ).first()
+        assert in_db1.public is True
+
+        in_db2 = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=film2.id
+        ).first()
+        assert in_db2.public is False
+
+
 # ── Deduplication ────────────────────────────────────────────────────────────
 
 def test_add_to_watchlist_duplicate_raises(app, sample_user, sample_film):
